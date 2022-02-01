@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+<title>Island Time</title>
+<style>
+button {
+  display: block;
+  margin: 0 auto 0.5em;
+  width: 90vw;
+  font-size: 150%;
+}
+.active {
+  background-color: #cec;
+}
+#pause {
+  background-color: #ecc;
+}
+</style>
+</head>
+<body>
+<audio id="sound" loop="true" src="media/mid-7.m4a"></audio>
+<button id="pause">Pause</button>
+<button data-track='calm-5'>Calm</button>
+<button data-track='calm-6'>Calm 2</button>
+<button data-track='mid-7'>Active</button>
+<button data-track='stormy-24'>Stormy 1</button>
+<button data-track='stormy-25'>Stormy 2</button>
+<script>
+let player = null;
+
+let rando = ([min, max] = range) => (Math.random() * (max - min)) + min;
+
+function createPlayer(elementId) {
+  let context = new AudioContext();
+  let domNode = document.getElementById(elementId);
+  let track = context.createMediaElementSource(domNode);
+  let eq = {
+    bass: {
+      filter: new BiquadFilterNode(context, {type:'peaking'}),
+      q: [0.3, 1.0],
+      freq: [80, 200],
+      gain: [-6.0, 6.0],
+    },
+    mid: {
+      filter: new BiquadFilterNode(context, {type:'peaking'}),
+      q: [0.3, 2.0],
+      freq: [400, 1200],
+      gain: [-9.0, 9.0],
+    },
+    treble: {
+      filter: new BiquadFilterNode(context, {type:'peaking'}),
+      q: [0.3, 1.0],
+      freq: [3000, 8000],
+      gain: [-6.0, 6.0],
+    },
+  };
+  let compressor = context.createDynamicsCompressor({
+    knee: 20,
+    ratio: 8,
+    release: 0.5,
+    threshold: -30,
+  });
+  track.connect(eq.bass.filter);
+  eq.bass.filter.connect(eq.mid.filter);
+  eq.mid.filter.connect(eq.treble.filter);
+  eq.treble.filter.connect(compressor);
+  compressor.connect(context.destination);
+  return {
+    context,
+    domNode,
+    track,
+    eq,
+  };
+}
+
+function init() {
+  if (player) return;
+  player = createPlayer('sound');
+  if (player.context.state === 'suspended') player.context.resume();
+}
+
+function tweakEq() {
+  let tm = player.context.currentTime;
+  for (let band in player.eq) {
+    let knob = player.eq[band];
+    knob.filter.frequency.setTargetAtTime(Math.trunc(rando(knob.freq)), tm, 20);
+    knob.filter.Q.setTargetAtTime(rando(knob.q), tm, 20);
+    knob.filter.gain.setTargetAtTime(rando(knob.gain), tm, 20);
+  }
+  if (!player.domNode.paused) setTimeout(tweakEq, 60 * 1000);
+}
+
+let trackPrefix = 'media/';
+let trackExt = '.m4a';
+
+document.querySelectorAll('[data-track]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    init();
+    player.domNode.src = `${trackPrefix}${btn.dataset.track}${trackExt}`;
+    player.domNode.play();
+    let activeButton = document.querySelector('.active');
+    if (activeButton) activeButton.classList.remove('active');
+    btn.classList.add('active');
+    tweakEq();
+  });
+});
+
+document.getElementById('pause').addEventListener('click', () => {
+  if (player) player.domNode.pause();
+});
+</script>
+</body>
+</html>
