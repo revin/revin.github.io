@@ -3,12 +3,20 @@
 <head>
 <title>Island Time</title>
 <style>
+body {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+  height: 100vh;
+  align-items: stretch;
+  gap: 0.5em;
+  background-color: #306;
+  margin: 0;
+  padding: 0;
+}
 button {
-  display: block;
-  margin: 0 auto 0.5em;
-  width: 90vw;
-  height: calc(100vh / 7);
-  font-size: 150%;
+  flex: auto;
+  font-size: calc(100vh / 14);
   border-radius: 10px;
 }
 .active {
@@ -109,6 +117,8 @@ document.querySelectorAll('[data-track]').forEach(btn => {
 
 document.getElementById('pause').addEventListener('click', () => {
   if (player) player.domNode.pause();
+  let activeButton = document.querySelector('.active');
+  if (activeButton) activeButton.classList.remove('active');
 });
 </script>
 </body>
