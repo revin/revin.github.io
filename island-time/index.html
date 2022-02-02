@@ -106,7 +106,8 @@ let trackExt = '.m4a';
 document.querySelectorAll('[data-track]').forEach(btn => {
   btn.addEventListener('click', () => {
     init();
-    player.domNode.src = `${trackPrefix}${btn.dataset.track}${trackExt}`;
+    let ts = Math.floor(rando([0, 300]));
+    player.domNode.src = `${trackPrefix}${btn.dataset.track}${trackExt}#t=${ts}`;
     player.domNode.play();
     let activeButton = document.querySelector('.active');
     if (activeButton) activeButton.classList.remove('active');
